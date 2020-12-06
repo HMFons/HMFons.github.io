@@ -1,0 +1,35 @@
+<p>Want to know what you're actual Spotify listens are? Ask them for your data in accordance with GDPR and input
+  your streamingHistory.json files.</p>
+<input type="file" id="myFile" multiple size="50" onchange="loadFiles()">
+<p><strong>Tip:</strong> Use the Control or the Shift key to select multiple files.</p>
+
+<p id="demo"></p>
+<div>
+  <button (click)="createArtistGroupedTable()">Group By Artist</button>
+  <button (click)="createTrackGroupedTable()" disabled>Group By Track</button>
+  <button (click)="groupBoth()">Group By Arist And Trackname</button>
+  <button (click)="loadData()">Use Hans' Data</button>
+</div>
+
+<table class="table table-striped" *ngIf="showBasicTable">
+  <thead>
+    <tr>
+      <th scope="col" sortable="artistName" (sort)="onSort($event)">Artist</th>
+      <th scope="col" sortable="trackName" (sort)="onSort($event)">Track</th>
+      <th scope="col" sortable="endTime" (sort)="onSort($event)">Played at</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let record of parsedJson">
+      <td>
+        <ngb-highlight [result]="record.artistName" [term]="searchTerm"></ngb-highlight>
+      </td>
+      <td>
+        <ngb-highlight [result]="record.trackName" [term]="searchTerm"></ngb-highlight>
+      </td>
+      <td>
+        <ngb-highlight [result]="record.endtime" [term]="searchTerm"></ngb-highlight>
+      </td>
+    </tr>
+  </tbody>
+</table>
