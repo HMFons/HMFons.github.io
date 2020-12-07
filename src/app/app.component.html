@@ -1,35 +1,68 @@
-<p>Want to know what you're actual Spotify listens are? Ask them for your data in accordance with GDPR and input
-  your streamingHistory.json files.</p>
-<input type="file" id="myFile" multiple size="50" onchange="loadFiles()">
-<p><strong>Tip:</strong> Use the Control or the Shift key to select multiple files.</p>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h3>Wrap yourself</h3>
+      <p>Want to know what you're actual Spotify listens are? Ask them for your data in accordance with GDPR and input
+        your streamingHistory.json files.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <input type="file" id="myFile" multiple size="50" (change)="loadFiles($event.target.files)">
+      <p><strong>Tip:</strong> Use the Control or the Shift key to select multiple files.</p>
 
-<p id="demo"></p>
-<div>
-  <button (click)="createArtistGroupedTable()">Group By Artist</button>
-  <button (click)="createTrackGroupedTable()" disabled>Group By Track</button>
-  <button (click)="groupBoth()">Group By Arist And Trackname</button>
-  <button (click)="loadData()">Use Hans' Data</button>
+      <p id="demo"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col"> <button class="btn btn-dark" (click)="createArtistGroupedTable()">Group By Artist</button></div>
+    <div class="col"> <button class="btn btn-dark" (click)="createTrackGroupedTable()" disabled>Group By Track</button>
+    </div>
+    <div class="col"> <button class="btn btn-dark" (click)="groupBoth()">Group By Arist And Trackname</button></div>
+    <div class="col"> <button class="btn btn-dark" (click)="loadData()">Use Hans' Data</button></div>
+
+  </div>
+  <div class="row">
+    <div class="col">
+      <input class="form-control" type="text" name="searchTerm" [(ngModel)]="searchTerm"
+        (change)="search()" placeholder="Search" />
+      <table class="table table-striped" *ngIf="showBasicTable">
+        <thead>
+          <tr>
+            <th scope="col" sortable="artistName" (sort)="onSort($event)">Artist</th>
+            <th scope="col" sortable="trackName" (sort)="onSort($event)">Track</th>
+            <th scope="col" sortable="endTime" (sort)="onSort($event)">Played at</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of pagedJson">
+            <td>
+              <ngb-highlight [result]="record.artistName" [term]="searchTerm"></ngb-highlight>
+            </td>
+            <td>
+              <ngb-highlight [result]="record.trackName" [term]="searchTerm"></ngb-highlight>
+            </td>
+            <td>
+              <ngb-highlight [result]="record.endTime" [term]="searchTerm"></ngb-highlight>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="d-flex justify-content-between p-2">
+        <ngb-pagination [collectionSize]="collectionSize" [(page)]="page" [pageSize]="pageSize"
+          (pageChange)="refreshJson()">
+        </ngb-pagination>
+
+        <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="refreshJson()">
+          <option [ngValue]="25">25 items per page</option>
+          <option [ngValue]="50">50 items per page</option>
+          <option [ngValue]="100">100 items per page</option>
+          <option [ngValue]="150">150 items per page</option>
+          <option [ngValue]="300">300 items per page</option>
+          <option [ngValue]="500">500 items per page</option>
+          <option [ngValue]="1000">1000 items per page</option>
+        </select>
+      </div>
+    </div>
+  </div>
 </div>
-
-<table class="table table-striped" *ngIf="showBasicTable">
-  <thead>
-    <tr>
-      <th scope="col" sortable="artistName" (sort)="onSort($event)">Artist</th>
-      <th scope="col" sortable="trackName" (sort)="onSort($event)">Track</th>
-      <th scope="col" sortable="endTime" (sort)="onSort($event)">Played at</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let record of parsedJson">
-      <td>
-        <ngb-highlight [result]="record.artistName" [term]="searchTerm"></ngb-highlight>
-      </td>
-      <td>
-        <ngb-highlight [result]="record.trackName" [term]="searchTerm"></ngb-highlight>
-      </td>
-      <td>
-        <ngb-highlight [result]="record.endtime" [term]="searchTerm"></ngb-highlight>
-      </td>
-    </tr>
-  </tbody>
-</table>

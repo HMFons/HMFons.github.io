@@ -9,44 +9,37 @@ import { Track } from './Track';
 
 export class AppComponent implements OnInit {
   parsedJson: Track[] = [];
+  filteredJson: Track[] = [];
+  pagedJson: Track[] = [];
   searchTerm: string = '';
   showBasicTable: boolean = true;
   showArtistTable: boolean;
   showTrackTable: boolean;
   showGroupedTable: boolean;
-
+  page: number = 1;
+  pageSize: number = 50;
+  collectionSize: number;
   constructor() {
 
   }
   ngOnInit() {
   }
 
-  loadFiles() {
-    var x = <HTMLInputElement>document.getElementById("myFile");
+  public loadFiles(files: FileList) {
     var txt = "";
-    if ('files' in x) {
-      if (x.files.length == 0) {
-        txt = "Select one or more files.";
-      } else {
-        for (var i = 0; i < x.files.length; i++) {
-          txt += "<br><strong>" + (i + 1) + ". file</strong><br>";
-          var file = x.files[i];
-          if ('name' in file) {
-            txt += "name: " + file.name + "<br>";
-          }
-          if ('size' in file) {
-            txt += "size: " + file.size + " bytes <br>";
-          }
-          this.readJsonFile(file);
+    if (files.length == 0) {
+      txt = "Select one or more files.";
+    } else {
+      for (var i = 0; i < files.length; i++) {
+        txt += "<br><strong>" + (i + 1) + ". file</strong><br>";
+        var file = files[i];
+        if ('name' in file) {
+          txt += "name: " + file.name + "<br>";
         }
-      }
-    }
-    else {
-      if ((<HTMLInputElement>x).value == "") {
-        txt += "Select one or more files.";
-      } else {
-        txt += "The files property is not supported by your browser!";
-        txt += "<br>The path of the selected file: " + (<HTMLInputElement>x).value; // If the browser does not support the files property, it will return the path of the selected file instead. 
+        if ('size' in file) {
+          txt += "size: " + file.size + " bytes <br>";
+        }
+        this.readJsonFile(file);
       }
     }
     document.getElementById("demo").innerHTML = txt;
@@ -54,13 +47,14 @@ export class AppComponent implements OnInit {
   readJsonFile(jsonFile) {
     var reader = new FileReader();
     reader.readAsText(jsonFile, "UTF-8");
-    reader.onload = function (evt) {
-      console.log(JSON.parse(<string>evt.target.result));
+    reader.onload = () => {
+      this.parsedJson = this.parsedJson.concat(JSON.parse(<string>reader.result));
+      this.filteredJson = this.parsedJson;
+      this.refreshJson();
     }
     reader.onerror = function (evt) {
       console.log('error reading file');
     }
-    reader.readAsText(jsonFile);
   }
   createTable(json) {
     var table = "<table><thead><th>Artist</th><th>Track</th><th>Played at</th></thead><tbody>"
@@ -131,7 +125,7 @@ export class AppComponent implements OnInit {
     });
     this.createGroupedTable(groupedByBoth);
   }
-  toArray(json) {
+  toArray(json: Track[]) {
     return Object.keys(json).map((key) => [key, json[key]]);
   }
   public async loadData() {
@@ -153,6 +147,18 @@ export class AppComponent implements OnInit {
       allData = allData.concat(data);
     }
     this.parsedJson = allData;
+    this.filteredJson = allData;
+    this.refreshJson();
   }
   public onSort(event: Event) { console.log(event); }
+  public search() {
+    this.filteredJson = this.parsedJson.filter(x => x.artistName.toLowerCase().includes(this.searchTerm) || x.trackName.toLowerCase().includes(this.searchTerm));
+    this.refreshJson();
+  }
+  public refreshJson() {
+    this.collectionSize = this.filteredJson.length
+    this.pagedJson = this.filteredJson
+      .map((track, i) => ({ id: i + 1, ...track }))
+      .slice((this.page - 1) * this.pageSize, (this.page - 1) * this.pageSize + this.pageSize);
+  }
 }
