@@ -18,14 +18,42 @@
     <div class="col"> <button class="btn btn-dark" (click)="createArtistGroupedTable()">Group By Artist</button></div>
     <div class="col"> <button class="btn btn-dark" (click)="createTrackGroupedTable()" disabled>Group By Track</button>
     </div>
-    <div class="col"> <button class="btn btn-dark" (click)="groupBoth()">Group By Arist And Trackname</button></div>
+    <div class="col"> <button class="btn btn-dark" (click)="groupBoth()" disabled>Group By Artist And Trackname</button></div>
     <div class="col"> <button class="btn btn-dark" (click)="loadData()">Use Hans' Data</button></div>
 
   </div>
   <div class="row">
+    <div class="col-3">
+      <input class="form-control" type="text" name="searchTerm" [(ngModel)]="searchTerm" (change)="search()"
+        placeholder="Artist or Trackname" />
+    </div>
+    <div class="col-auto">
+      <form class="form-inline">
+        <div class="form-group">
+          <div class="input-group">
+            <input class="form-control" placeholder="From" name="dp" [(ngModel)]="dateFrom" ngbDatepicker
+              #df="ngbDatepicker" (change)="search()">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary calendar" (click)="df.toggle()" type="button"></button>
+            </div>
+          </div>
+        </div>&nbsp;
+        <div class="form-group">
+          <div class="input-group">
+            <input class="form-control" placeholder="To" name="dp" [(ngModel)]="dateTo" ngbDatepicker
+              #dt="ngbDatepicker" (change)="search()">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary calendar" (click)="dt.toggle()" type="button"></button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="col"> <button class="btn btn-dark" (click)="search()">Search</button></div>
+
+  </div>
+  <div class="row">
     <div class="col">
-      <input class="form-control" type="text" name="searchTerm" [(ngModel)]="searchTerm"
-        (change)="search()" placeholder="Search" />
       <table class="table table-striped" *ngIf="showBasicTable">
         <thead>
           <tr>
@@ -48,11 +76,28 @@
           </tr>
         </tbody>
       </table>
+      <table class="table table-striped" *ngIf="showArtistTable">
+        <thead>
+          <tr>
+            <th scope="col" sortable="artistName" (sort)="onSort($event)">Artist</th>
+            <th scope="col" sortable="amountPlayed" (sort)="onSort($event)">Played at</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of pagedJson">
+            <td>
+              <ngb-highlight [result]="record.artistName" [term]="searchTerm"></ngb-highlight>
+            </td>          
+            <td>
+              <ngb-highlight [result]="record.amountPlayed" [term]="searchTerm"></ngb-highlight>
+            </td>
+          </tr>
+        </tbody>
+      </table>
       <div class="d-flex justify-content-between p-2">
         <ngb-pagination [collectionSize]="collectionSize" [(page)]="page" [pageSize]="pageSize"
           (pageChange)="refreshJson()">
         </ngb-pagination>
-
         <select class="custom-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="refreshJson()">
           <option [ngValue]="25">25 items per page</option>
           <option [ngValue]="50">50 items per page</option>

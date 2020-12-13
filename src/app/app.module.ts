@@ -4,10 +4,12 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
+import { NgbdSortableHeader } from './sortable-header';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    NgbdSortableHeader
   ],
   imports: [
     BrowserModule,

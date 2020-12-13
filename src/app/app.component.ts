@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { NgbdSortableHeader, SortEvent } from './sortable-header';
 import { Track } from './Track';
+const compare = (v1: string | number, v2: string | number) => v1 < v2 ? -1 : v1 > v2 ? 1 : 0;
 
 @Component({
   selector: 'app-root',
@@ -16,9 +19,15 @@ export class AppComponent implements OnInit {
   showArtistTable: boolean;
   showTrackTable: boolean;
   showGroupedTable: boolean;
+  grouped: boolean;
   page: number = 1;
   pageSize: number = 50;
   collectionSize: number;
+  dateFrom: NgbDate;
+  dateTo: NgbDate;
+
+  @ViewChildren(NgbdSortableHeader) headers: QueryList<NgbdSortableHeader>;
+
   constructor() {
 
   }
@@ -65,19 +74,18 @@ export class AppComponent implements OnInit {
 
   }
   public createArtistGroupedTable() {
+    this.grouped = true;
     this.showBasicTable = false;
     this.showArtistTable = true;
-    var json = this.groupTable(this.parsedJson, 'artistName')
-    var table = "<table><thead><th>Artist</th><th>Track</th><th>AmountPlayed</th></thead><tbody>"
+    var json = this.groupTable(this.filteredJson, 'artistName')
+    console.log(json);
     var result = this.toArray(json);
-    result.forEach(artist => {
-      table += " <tr><td>" + artist[0] + "</td><td>" + artist[1].length + "</td></tr>";
-      artist[1].sort((a, b) => (a.trackName > b.trackName) ? 1 : ((b.trackName > a.trackName) ? -1 : 0)).forEach(track => {
-        table += "<tr><td></td><td>" + track.trackName + "</td></tr>";
-      })
-    });
-    table += "</tbody></table>";
-    document.getElementById("table").innerHTML = table;
+    console.log(result);
+    this.filteredJson = [];
+    result.forEach(val => this.filteredJson.push({ artistName: val[0], amountPlayed: val[1].length, trackName: '', endTime: null }));
+    this.refreshJson();
+    this.showBasicTable = false;
+    this.showArtistTable = true;
   }
   public createTrackGroupedTable() {
     var json = this.groupTable(this.parsedJson, 'trackName');
@@ -105,15 +113,15 @@ export class AppComponent implements OnInit {
     table += "</tbody></table>";
     document.getElementById("table").innerHTML = table;
   }
-  groupTable(data, key) {
-    var grouped = data.reduce(function (storage, item) {
+  groupTable(data: Track[], key: string): Track[] {
+    var grouped: Track[] = data.reduce(function (storage, item) {
       var group = item[key];
 
       storage[group] = storage[group] || [];
 
       storage[group].push(item);
       return storage;
-    }, {});
+    }, []);
     return grouped
   }
   public groupBoth() {
@@ -150,15 +158,41 @@ export class AppComponent implements OnInit {
     this.filteredJson = allData;
     this.refreshJson();
   }
-  public onSort(event: Event) { console.log(event); }
+
   public search() {
-    this.filteredJson = this.parsedJson.filter(x => x.artistName.toLowerCase().includes(this.searchTerm) || x.trackName.toLowerCase().includes(this.searchTerm));
+    console.log('filter');
+    if (this.grouped) {
+      this.filteredJson = this.filteredJson.filter(x => x.artistName.toLowerCase().includes(this.searchTerm.toLowerCase()) || x.trackName.toLowerCase().includes(this.searchTerm.toLowerCase()));
+    } else {
+      this.filteredJson = this.parsedJson.filter(x => x.artistName.toLowerCase().includes(this.searchTerm.toLowerCase()) || x.trackName.toLowerCase().includes(this.searchTerm.toLowerCase()));
+    }
+    this.filteredJson = this.filteredJson.filter(x => !this.dateFrom || new Date(x.endTime) >= new Date(this.dateFrom.year, this.dateFrom.month - 1, this.dateFrom.day));
+    this.filteredJson = this.filteredJson.filter(x => !this.dateTo || new Date(x.endTime) <= new Date(this.dateTo.year, this.dateTo.month - 1, this.dateTo.day));
     this.refreshJson();
   }
+
   public refreshJson() {
     this.collectionSize = this.filteredJson.length
     this.pagedJson = this.filteredJson
       .map((track, i) => ({ id: i + 1, ...track }))
       .slice((this.page - 1) * this.pageSize, (this.page - 1) * this.pageSize + this.pageSize);
+  }
+  onSort({ column, direction }: SortEvent) {
+
+    // resetting other headers
+    this.headers.forEach(header => {
+      if (header.sortable !== column) {
+        header.direction = '';
+      }
+    });
+
+    // sorting countries
+    if (direction !== '' || column !== '') {
+      this.filteredJson = [...this.filteredJson].sort((a, b) => {
+        const res = compare(a[column], b[column]);
+        return direction === 'asc' ? res : -res;
+      });
+      this.refreshJson();
+    }
   }
 }
